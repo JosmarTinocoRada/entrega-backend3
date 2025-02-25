@@ -5,31 +5,40 @@ import { CustomError, errorDictionary } from '../utils/errorHandler.js';
 
 class MockingService {
     static async generateUsers(count = 50) {
-        let users = [];
-        const password = await bcrypt.hash('coder123', 10);
+        try {
+            let users = [];
+            const password = await bcrypt.hash('coder123', 10);
 
-        // Obtener correos ya existentes en la BD para evitar duplicados
-        const existingEmails = new Set(await usersService.getAll().then(users => users.map(u => u.email)));
+            // Obtener correos ya existentes en la BD para evitar duplicados
+            const existingUsers = await usersService.getAll();
+            const existingEmails = new Set(existingUsers.map(u => u.email));
 
-        for (let i = 0; i < count; i++) {
-            let email;
-            do {
-                email = faker.internet.email();
-            } while (existingEmails.has(email)); // Evitar duplicados
+            for (let i = 0; i < count; i++) {
+                let email;
+                do {
+                    email = faker.internet.email();
+                } while (existingEmails.has(email)); // Evitar duplicados
 
-            existingEmails.add(email);
+                existingEmails.add(email);
 
-            const user = {
-                first_name: faker.person.firstName(),
-                last_name: faker.person.lastName(),
-                email,
-                password,
-                role: faker.helpers.arrayElement(['user', 'admin']),
-                pets: []
-            };
-            users.push(user);
+                const user = {
+                    first_name: faker.person.firstName(),
+                    last_name: faker.person.lastName(),
+                    email,
+                    password,
+                    role: faker.helpers.arrayElement(['user', 'admin']),
+                    pets: []
+                };
+                users.push(user);
+            }
+            return users;
+        } catch (error) {
+            throw new CustomError(
+                errorDictionary.MOCKING_ERROR.code,
+                "Error generating users",
+                error.message
+            );
         }
-        return users;
     }
 
     static async generateAndInsertUsers(count) {
@@ -40,8 +49,8 @@ class MockingService {
         } catch (error) {
             throw new CustomError(
                 errorDictionary.MOCKING_ERROR.code,
-                errorDictionary.MOCKING_ERROR.message,
-                error.message,
+                "Error inserting users into database",
+                error.message
             );
         }
     }
@@ -49,7 +58,15 @@ class MockingService {
     static async generateAndInsertPets(count) {
         try {
             const users = await usersService.getAll();
-            const userIds = users.map(user => user._id); // Obtener IDs de usuarios existentes
+            if (!users || users.length === 0) {
+                throw new CustomError(
+                    errorDictionary.MOCKING_ERROR.code,
+                    "No users found in the database",
+                    "Ensure users exist before generating pets"
+                );
+            }
+
+            const userIds = users.map(user => user._id);
 
             let pets = [];
             for (let i = 0; i < count; i++) {
@@ -68,7 +85,7 @@ class MockingService {
         } catch (error) {
             throw new CustomError(
                 errorDictionary.MOCKING_ERROR.code,
-                errorDictionary.MOCKING_ERROR.message,
+                "Error generating or inserting pets",
                 error.message
             );
         }

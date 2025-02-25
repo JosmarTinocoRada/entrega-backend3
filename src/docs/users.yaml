@@ -1,85 +1,74 @@
 openapi: 3.0.0
 info:
-  title: API de Usuarios
+  title: Mi API
   version: 1.0.0
-  description: API para gestionar usuarios
 
-servers:
-  - url: http://localhost:8080
+components:
+  $ref: './components.yaml'  # Ruta correcta al archivo components.yaml
 
 paths:
   /api/users:
     get:
-      summary: Obtiene todos los usuarios
+      summary: Obtener todos los usuarios
       responses:
         '200':
           description: Lista de usuarios
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status: 
-                    type: string
-                    example: success
-                  payload:
-                    type: array
-                    items:
-                      $ref: './components.yaml#/components/schemas/User'  # Referencia corregida
-        '500':
-          description: Error interno
+                $ref: '#/components/schemas/UserResponse'  # Referencia al esquema UserResponse
 
   /api/users/{uid}:
     get:
-      summary: Obtiene un usuario por ID
+      summary: Obtener un usuario por ID
       parameters:
-        - name: uid
-          in: path
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/UserIdParam'  # Referencia al parámetro UserIdParam
       responses:
         '200':
           description: Usuario encontrado
           content:
             application/json:
               schema:
-                $ref: './components.yaml#/components/schemas/UserResponse'  # Referencia corregida
-        '404':
-          description: Usuario no encontrado
-
+                $ref: '#/components/schemas/UserResponse'  # Referencia al esquema UserResponse
+    
     put:
-      summary: Actualiza un usuario por ID
+      summary: Actualizar un usuario
       parameters:
-        - name: uid
-          in: path
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/UserIdParam'  # Parámetro UID
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              $ref: './components.yaml#/components/schemas/UpdateUser'  # Referencia corregida
+              $ref: '#/components/schemas/UpdateUser'  # Referencia al esquema UpdateUser
       responses:
         '200':
           description: Usuario actualizado
-        '400':
-          description: Solicitud inválida
-        '404':
-          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'  # Referencia al esquema UserResponse
 
     delete:
-      summary: Elimina un usuario por ID
+      summary: Eliminar un usuario
       parameters:
-        - name: uid
-          in: path
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/UserIdParam'  # Referencia al parámetro UserIdParam
       responses:
         '200':
-          description: Usuario eliminado
+          description: Usuario eliminado con éxito
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'  # Respuesta de éxito
         '404':
           description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: Usuario no encontrado

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import PetDTO from '../dto/Pet.dto.js';
 import { petsService } from '../services/index.js';
 import { CustomError, errorDictionary, handleError } from '../utils/errorHandler.js';
-import { __dirname } from '../utils/index.js';  // 🔥 Corrección aquí
+import { __dirname } from '../utils/index.js';
 import uploader from '../utils/uploader.js';
 
 const router = Router();
@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
         const pets = await petsService.getAll();
         res.send({ status: "success", payload: pets });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: 'Error fetching pets' });
+        handleError(error, res);
     }
 });
 
@@ -22,10 +22,16 @@ router.post('/', async (req, res) => {
     try {
         const { name, specie, birthDate } = req.body;
         if (!name || !specie || !birthDate) {
-            throw new CustomError(errorDictionary.INCOMPLETE_VALUES.code, errorDictionary.INCOMPLETE_VALUES.message, 'Name, specie and birthDate are required');
+            throw new CustomError(
+                errorDictionary.INCOMPLETE_VALUES.code,
+                "Incomplete pet data",
+                "Name, specie and birthDate are required"
+            );
         }
+
         const pet = PetDTO.getPetInputFrom({ name, specie, birthDate });
         const result = await petsService.create(pet);
+
         res.status(201).json({ status: 'success', payload: result });
     } catch (error) {
         handleError(error, res);
@@ -36,10 +42,17 @@ router.post('/', async (req, res) => {
 router.post('/withimage', uploader.single('image'), async (req, res) => {
     try {
         const file = req.file;
-        const { name, specie, birthDate } = req.body;
+        if (!file) {
+            return res.status(400).send({ status: "error", message: "Image is required" });
+        }
 
+        const { name, specie, birthDate } = req.body;
         if (!name || !specie || !birthDate) {
-            return res.status(400).send({ status: "error", error: "Incomplete values" });
+            throw new CustomError(
+                errorDictionary.INCOMPLETE_VALUES.code,
+                "Incomplete pet data",
+                "Name, specie and birthDate are required"
+            );
         }
 
         const pet = PetDTO.getPetInputFrom({
@@ -53,19 +66,25 @@ router.post('/withimage', uploader.single('image'), async (req, res) => {
         res.send({ status: "success", payload: result });
 
     } catch (error) {
-        res.status(500).json({ status: 'error', message: 'Error creating pet with image' });
+        handleError(error, res);
     }
 });
 
 // Actualizar una mascota
 router.put('/:pid', async (req, res) => {
     try {
-        const petUpdateBody = req.body;
         const petId = req.params.pid;
+        const petUpdateBody = req.body;
+
+        const existingPet = await petsService.getBy({ _id: petId });
+        if (!existingPet) {
+            return res.status(404).json({ status: 'error', message: 'Pet not found' });
+        }
+
         await petsService.update(petId, petUpdateBody);
         res.send({ status: "success", message: "Pet updated" });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: 'Error updating pet' });
+        handleError(error, res);
     }
 });
 
@@ -73,10 +92,16 @@ router.put('/:pid', async (req, res) => {
 router.delete('/:pid', async (req, res) => {
     try {
         const petId = req.params.pid;
+
+        const existingPet = await petsService.getBy({ _id: petId });
+        if (!existingPet) {
+            return res.status(404).json({ status: 'error', message: 'Pet not found' });
+        }
+
         await petsService.delete(petId);
         res.send({ status: "success", message: "Pet deleted" });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: 'Error deleting pet' });
+        handleError(error, res);
     }
 });
 

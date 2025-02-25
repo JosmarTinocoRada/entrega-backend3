@@ -9,6 +9,7 @@ router.get('/mockingpets', async (req, res) => {
         const pets = MockingService.generatePets(100); // Generar 100 mascotas
         res.status(200).json({ status: 'success', payload: pets });
     } catch (error) {
+        console.error("Error generating mock pets:", error);
         res.status(500).json({ status: 'error', message: 'Error generating mock pets' });
     }
 });
@@ -18,6 +19,7 @@ router.get('/mockingusers', async (req, res) => {
         const users = await MockingService.generateUsers(50);
         res.status(200).json({ status: 'success', payload: users });
     } catch (error) {
+        console.error("Error generating mock users:", error);
         res.status(500).json({ status: 'error', message: 'Error generating mock users' });
     }
 });
@@ -43,12 +45,13 @@ router.post('/generateData', async (req, res) => {
         const generatedUsers = await MockingService.generateAndInsertUsers(users);
         const generatedPets = await MockingService.generateAndInsertPets(pets);
 
-        res.status(200).send({
+        res.status(200).json({
             status: 'success',
             message: 'Mock data generated successfully',
             data: { users: generatedUsers, pets: generatedPets }
         });
     } catch (error) {
+        console.error("Error generating mock data:", error);
         handleError(error, res);
     }
 });
