@@ -1,28 +1,27 @@
 import userModel from "./models/User.js";
 
-
-export default class Users {
-    
-    get = (params) =>{
-        return userModel.find(params);
+export default class UsersDAO {
+    async get(params) {
+        return await userModel.find(params).lean();
     }
 
-    getBy = (params) =>{
-        return userModel.findOne(params);
+    async getBy(params) {
+        return await userModel.findOne(params).lean();
     }
 
-    save = (doc) =>{
-        return userModel.create(doc);
+    async create(doc) {
+        return await userModel.create(doc);
     }
 
-    update = (id,doc) =>{
-        return userModel.findByIdAndUpdate(id,{$set:doc})
+    async update(id, doc) {
+        return await userModel.findByIdAndUpdate(id, { $set: doc }, { new: true }).lean();
     }
 
-    delete = (id) =>{
-        return userModel.findByIdAndDelete(id);
+    async delete(id) {
+        return await userModel.findByIdAndDelete(id);
     }
-    createMany = (docs) => {
-        return userModel.insertMany(docs); 
+
+    async createMany(docs) {
+        return await userModel.insertMany(docs);
     }
 }

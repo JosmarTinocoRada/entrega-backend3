@@ -25,7 +25,7 @@ paths:
                   payload:
                     type: array
                     items:
-                      $ref: '#/components/schemas/User'
+                      $ref: './components.yaml#/components/schemas/User'  # Referencia corregida
         '500':
           description: Error interno
 
@@ -44,7 +44,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserResponse'
+                $ref: './components.yaml#/components/schemas/UserResponse'  # Referencia corregida
         '404':
           description: Usuario no encontrado
 
@@ -61,7 +61,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/requestBodies/UpdateUser'
+              $ref: './components.yaml#/components/schemas/UpdateUser'  # Referencia corregida
       responses:
         '200':
           description: Usuario actualizado
@@ -83,37 +83,3 @@ paths:
           description: Usuario eliminado
         '404':
           description: Usuario no encontrado
-
-components:
-  schemas:
-    User:
-      type: object
-      properties:
-        _id:
-          type: string
-        name:
-          type: string
-        email:
-          type: string
-        role:
-          type: string
-
-    UserResponse:
-      type: object
-      properties:
-        status: 
-          type: string
-          example: success
-        payload:
-          $ref: '#/components/schemas/User'
-
-  requestBodies:
-    UpdateUser:
-      type: object
-      properties:
-        name:
-          type: string
-        email:
-          type: string
-        role:
-          type: string

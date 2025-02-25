@@ -8,10 +8,10 @@ const router = Router();
 router.get('/', async (req, res) => {
     try {
         const result = await adoptionsService.getAll();
-        res.status(200).json({ status: "success", payload: result });
+        return res.status(200).json({ status: "success", payload: result });
     } catch (error) {
         console.error("Error fetching adoptions:", error);
-        res.status(500).json({ status: "error", message: "Error fetching adoptions" });
+        return res.status(500).json({ status: "error", message: "Error fetching adoptions" });
     }
 });
 
@@ -21,7 +21,7 @@ router.get('/:aid', async (req, res) => {
         const { aid } = req.params;
 
         if (!mongoose.Types.ObjectId.isValid(aid)) {
-            return res.status(400).json({ status: "error", message: "Invalid adoption ID" });
+            return res.status(400).json({ status: "error", message: "Invalid adoption ID format" });
         }
 
         const adoption = await adoptionsService.getBy({ _id: aid });
@@ -30,59 +30,48 @@ router.get('/:aid', async (req, res) => {
             return res.status(404).json({ status: "error", message: "Adoption not found" });
         }
 
-        res.status(200).json({ status: "success", payload: adoption });
+        return res.status(200).json({ status: "success", payload: adoption });
     } catch (error) {
         console.error("Error fetching adoption:", error);
-        res.status(500).json({ status: "error", message: "Error fetching adoption" });
+        return res.status(500).json({ status: "error", message: "Error fetching adoption" });
     }
 });
 
-// Crear una adopción cuando usuario y mascota existen
+// Crear una adopción
 router.post('/:uid/:pid', async (req, res) => {
     try {
         const { uid, pid } = req.params;
 
-        // Verificar que los IDs sean válidos
         if (!mongoose.Types.ObjectId.isValid(uid) || !mongoose.Types.ObjectId.isValid(pid)) {
-            return res.status(400).json({ status: "error", message: "Invalid user or pet ID" });
+            return res.status(400).json({ status: "error", message: "Invalid user or pet ID format" });
         }
 
-        // Obtener el usuario
-        const user = await usersService.getUserById(uid);
+        const user = await usersService.getBy({ _id: uid });
         if (!user) {
             return res.status(404).json({ status: "error", message: "User not found" });
         }
 
-        // Obtener la mascota
         const pet = await petsService.getBy({ _id: pid });
         if (!pet) {
             return res.status(404).json({ status: "error", message: "Pet not found" });
         }
 
-        // Verificar si la mascota ya está adoptada
         if (pet.adopted) {
             return res.status(400).json({ status: "error", message: "Pet is already adopted" });
         }
 
-        // Asegurar que user.pets sea un array antes de agregar la mascota
-        if (!Array.isArray(user.pets)) {
-            user.pets = [];
-        }
+        const adoption = await adoptionsService.createAdoption({ owner: user._id, pet: pet._id });
 
-        // Asignar la mascota al usuario
+        user.pets = user.pets || [];
         user.pets.push(pet._id);
         await usersService.update(user._id, { pets: user.pets });
 
-        // Marcar la mascota como adoptada
         await petsService.update(pet._id, { adopted: true, owner: user._id });
 
-        // Registrar la adopción
-        const adoption = await adoptionsService.create({ owner: user._id, pet: pet._id });
-
-        res.status(201).json({ status: "success", message: "Pet adopted", payload: adoption });
+        return res.status(201).json({ status: "success", message: "Pet adopted", payload: adoption });
     } catch (error) {
         console.error("Error creating adoption:", error);
-        res.status(500).json({ status: "error", message: "Error creating adoption" });
+        return res.status(500).json({ status: "error", message: "Error creating adoption" });
     }
 });
 

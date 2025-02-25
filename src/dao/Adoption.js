@@ -1,24 +1,23 @@
 import adoptionModel from "./models/Adoption.js";
 
-export default class Adoption {
-
-    get = (params) =>{
-        return adoptionModel.find(params);
+export default class AdoptionDAO {
+    async get(params) {
+        return await adoptionModel.find(params).lean();
     }
 
-    getBy = (params) =>{
-        return adoptionModel.findOne(params);
+    async getBy(params) {
+        return await adoptionModel.findOne(params).lean();
     }
 
-    save = (doc) =>{
-        return adoptionModel.create(doc);
+    async create(doc) {
+        return await adoptionModel.create(doc);
     }
 
-    update = (id,doc) =>{
-        return adoptionModel.findByIdAndUpdate(id,{$set:doc})
+    async update(id, doc) {
+        return await adoptionModel.findByIdAndUpdate(id, { $set: doc }, { new: true }).lean();
     }
-    
-    delete = (id) =>{
-        return adoptionModel.findByIdAndDelete(id);
+
+    async delete(id) {
+        return await adoptionModel.findByIdAndDelete(id);
     }
 }
